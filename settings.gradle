@@ -1,0 +1,7 @@
+rootProject.name = 'Editor'
+
+include 'Core_Application'
+include 'Plugins_Scripts'
+include 'Com_Api'
+
+
