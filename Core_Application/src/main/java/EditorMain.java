@@ -1,6 +1,8 @@
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
@@ -12,7 +14,18 @@ import javafx.scene.control.ToolBar;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
+import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.text.html.Option;
+import javax.tools.Tool;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Stack;
 
 
 public class EditorMain extends Application{
@@ -43,32 +56,35 @@ public class EditorMain extends Application{
         list_api.add("Emoji");
 
         // Create toolbar
-        Button btn1 = new Button("File");
-        Button btn2 = new Button("Edit");
-        Button btn3 = new Button("Add Script");
-        Button btn4 = new Button("Add Plugin");
+        Button btn1 = new Button("Viewer");
+        Button btn2 = new Button("File");
+        Button btn3 = new Button("Text");
+        Button btn4 = new Button("Add Script");
+        Button btn5 = new Button("Add Plugin");
+        Button btn6 = new Button("Something");
 
-        btn1.setStyle("-fx-background-color: lightgray;");
-        btn2.setStyle("-fx-background-color: lightgray;");
-        btn3.setStyle("-fx-background-color: lightgray;");
-        btn4.setStyle("-fx-background-color: lightgray;");
+        List<Button> btns = new ArrayList<>(Arrays.asList(btn1, btn2, btn3, btn4, btn5));
+        setBtnStyling("-fx-background-color: lightgray;", btns);
 
-        setOnHover(btn1);
-        setOnHover(btn2);
-        setOnHover(btn3);
-        setOnHover(btn4);
+        ToolBar toolBar = new ToolBar(btn1, btn2, btn3, btn4, btn5);
 
-
-        ToolBar toolBar = new ToolBar(btn1, btn2, btn3, btn4);
-
-        // Subtle user experience tweaks
         toolBar.setFocusTraversable(false);
         toolBar.getItems().forEach(btn -> btn.setFocusTraversable(false));
         textArea.setStyle("-fx-font-family: 'monospace'"); // Set the font
 
+        ToolBar OptionsToolbar = new ToolBar(btn6);
+
+        VBox toolbarPane = new VBox();
+        toolbarPane.setPadding(new Insets(5, 0, 5, 0));
+        toolbarPane.setStyle("-fx-background-color: DAE6F3;");
+
+        toolbarPane.getChildren().add(toolBar);
+        toolbarPane.getChildren().add(OptionsToolbar);
+
+
         // Add the main parts of the UI to the window.
         BorderPane mainBox = new BorderPane();
-        mainBox.setTop(toolBar);
+        mainBox.setTop(toolbarPane);
         mainBox.setCenter(textArea);
         Scene scene = new Scene(mainBox);
 
@@ -122,11 +138,6 @@ public class EditorMain extends Application{
         stage.show();
     }
 
-    private void setOnHover(Button btn){
-        btn.setOnMouseEntered(event -> btn.setStyle("-fx-background-color: gray;"));
-        btn.setOnMouseExited(event -> btn.setStyle("-fx-background-color: lightgray;"));
-    }
-
     private void showDialog1()
     {
         // TextInputDialog is a subclass of Dialog that just presents a single text field.
@@ -172,4 +183,23 @@ public class EditorMain extends Application{
         dialog.getDialogPane().getButtonTypes().add(ButtonType.OK);
         dialog.showAndWait();
     }
+
+    // Buttons styling
+
+    private void setOnHover(@NotNull Button btn){
+        btn.setOnMouseEntered(event -> {
+//            if (btn.getBackground().toString() == "gray")
+//            btn.setStyle("-fx-background-color: gray;");
+        });
+        btn.setOnMouseExited(event -> btn.setStyle("-fx-background-color: lightgray;"));
+    }
+
+    private void setBtnStyling(String background_color, @NotNull List<Button> btns){
+
+        for  (Button b : btns){
+            b.setStyle(background_color);
+            setOnHover(b);
+        }
+    }
+
 }
