@@ -1,6 +1,6 @@
 import java.time.LocalDateTime;
 
-public class DatePlugin implements PluginHandle {
+public class DatePlugin implements DatePluginHandle {
 
     @Override
     public LocalDateTime onClick() {

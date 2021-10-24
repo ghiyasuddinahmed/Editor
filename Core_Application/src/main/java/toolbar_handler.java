@@ -10,13 +10,18 @@ import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class toolbar_handler {
-
+    EditorMain editor;
+    public toolbar_handler(EditorMain editor){
+        this.editor=editor;
+    }
+    FileOperations file_op=new FileOperations();
     public void toolbarHandler(Button btn, ToolBar toolbar, VBox vbox, Button isChecked, Stage stage){
         isChecked.setStyle("-fx-background-color: lightgray;");
         btn.setStyle("-fx-background-color: gray;");
@@ -85,11 +90,24 @@ public class toolbar_handler {
             if (b.getText().equals("Open")){
                 b.setOnAction(event -> {
                     File file = openFileDialog(stage, "Open", false, false);
+
+                    try {
+                        file_op.loadFile(file.getPath(),editor);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+
                 });
             }else{
                 if (b.getText().equals("Save")){
                     b.setOnAction(event -> {
                         File file = openFileDialog(stage, "Save", true, false);
+                        try {
+                            file_op.saveFile(file.getPath(),editor);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     });
                 }else{
                     b.setOnAction(event -> {

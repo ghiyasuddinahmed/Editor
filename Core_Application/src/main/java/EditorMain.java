@@ -111,18 +111,12 @@ public class EditorMain extends Application{
         {
             try {
                 if (newValue.intValue() > 2 && handler != null) {
-                    String arr = null;
-                        arr = handler.onType(textArea.getText(newValue.intValue() - 3, newValue.intValue()));
+                    handler.onType(newValue.intValue());
 
-                    if (arr != null) {
-                        editor.textArea.replaceText(newValue.intValue() - 3, newValue.intValue(), "😊");
-                    }
+
                 }
             }
             catch(IndexOutOfBoundsException e){
-
-            }
-            catch(Exception e){
 
             }
         });
@@ -223,7 +217,7 @@ public class EditorMain extends Application{
                                        ToolBar toolBar){
         for (Button b : toolbar_btns){
             b.setOnAction(event -> {
-                new toolbar_handler().toolbarHandler(b, toolbar, vbox, isChecked, stage);
+                new toolbar_handler(editor).toolbarHandler(b, toolbar, vbox, isChecked, stage);
             });
         }
         toolbar_btns.get(toolbar_btns.size()-2).setOnAction(event -> showDialog2(stage, listView_script,
@@ -263,6 +257,10 @@ public class EditorMain extends Application{
 
     public void registerHandler(TextAreaObserver handler){
         this.handler=handler;
+    }
+
+    public String getEmoji(){
+        return "😊";
     }
 
 

@@ -1,7 +1,7 @@
 
 
 public interface TextAreaObserver {
-    String onType(String emoji);
+    void onType(int pos);
 }
 
 

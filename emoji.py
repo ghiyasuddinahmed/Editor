@@ -7,11 +7,13 @@ import TextAreaObserver
 
 class Emoji(TextAreaObserver):
 
-    def onType(self,emoji):
+    def onType(self,pos):
+
+        emoji=editor.textArea.getText(pos-3,pos)
 
         if(emoji==":-)"):
-            arr ="\uD83D\uDE0A"
-            return arr
+            editor.textArea.replaceText(pos - 3, pos, editor.getEmoji())
+
 
 
 
