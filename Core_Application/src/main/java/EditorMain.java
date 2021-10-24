@@ -1,4 +1,5 @@
 import javafx.application.Application;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -71,7 +72,7 @@ public class EditorMain extends Application{
 
         ObservableList<String> list_script = FXCollections.observableArrayList();
         ListView<String> listView_script = new ListView<>(list_script);
-        list_script.add("Emoji");
+        
 
         // Create toolbar
         Button btn1 = new Button("Viewer");
@@ -113,19 +114,20 @@ public class EditorMain extends Application{
         btn4.setOnAction(event -> showDialog2(stage,listView_script, toolBar));
 
         // TextArea event handlers & caret positioning.
-        textArea.textProperty().addListener((object, oldValue, newValue) ->
+        textArea.caretPositionProperty().addListener((ChangeListener<Number>) (object, oldValue, newValue) ->
         {
+            try {
+                if (newValue.intValue() > 2 && handler != null) {
+                    String arr = handler.onType(textArea.getText(newValue.intValue() - 3, newValue.intValue()));
 
-            if(textArea.getLength()>2 && handler!=null){
-                String arr=handler.onType(textArea.getText(textArea.getCaretPosition()-3, textArea.getCaretPosition() ));
 
-                if(arr!=null) {
-                    System.out.println(arr);
+                    if (arr != null) {
+                        editor.textArea.replaceText(newValue.intValue() - 3, newValue.intValue(), "😊");
+                    }
 
-                    editor.textArea.replaceText(textArea.getCaretPosition()-3, textArea.getCaretPosition(), arr);
                 }
-
             }
+            catch(Exception e){}
         });
 
         textArea.setText("This is sample text for development testing");
@@ -194,12 +196,11 @@ public class EditorMain extends Application{
 
         addBtn.setOnAction(e->
         {
-            FileChooser chooser = new FileChooser();
-            chooser.setTitle("Open File");
-            File file=chooser.showOpenDialog(stage);
-            String path=file.toString();
+
             ScriptRunner runner=new ScriptRunner();
+            String path=fileChooser(stage);
             runner.runner(editor,path);
+            listView.add("Emoji Script");
         });
 
         // FYI: 'ObservableList' inherits from the ordinary List interface, but also works as a subject for any 'observer-pattern' purposes; e.g., to allow an on-screen ListView to display any changes made to the list as they are made.
@@ -232,6 +233,16 @@ public class EditorMain extends Application{
             b.setStyle(background_color);
             setOnHover(b);
         }
+    }
+
+
+    public String fileChooser(Stage stage){
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Open File");
+        File file=chooser.showOpenDialog(stage);
+        String path=file.toString();
+        return path;
+
     }
 
     public void registerHandler(TextAreaObserver handler){
