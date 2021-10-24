@@ -32,6 +32,7 @@ import org.python.core.*;
 
 import javax.swing.*;
 import java.lang.reflect.*;
+import java.util.Optional;
 
 class ScriptRunner{
     PythonInterpreter intr;
@@ -46,7 +47,7 @@ class ScriptRunner{
 
 public class EditorMain extends Application{
     TextAreaObserver handler;
-
+    private Button isChecked = null;
     EditorMain editor=this;
 
     public static void main(String[] args)
@@ -80,7 +81,7 @@ public class EditorMain extends Application{
         Button btn3 = new Button("Text");
         Button btn4 = new Button("Add Script");
         Button btn5 = new Button("Add Plugin");
-        Button btn6 = new Button("Something");
+        isChecked = btn1;
 
         List<Button> btns = new ArrayList<>(Arrays.asList(btn1, btn2, btn3, btn4, btn5));
         setBtnStyling("-fx-background-color: lightgray;", btns);
@@ -91,14 +92,12 @@ public class EditorMain extends Application{
         toolBar.getItems().forEach(btn -> btn.setFocusTraversable(false));
         textArea.setStyle("-fx-font-family: 'monospace'"); // Set the font
 
-        ToolBar OptionsToolbar = new ToolBar(btn6);
-
         VBox toolbarPane = new VBox();
         toolbarPane.setPadding(new Insets(5, 0, 5, 0));
         toolbarPane.setStyle("-fx-background-color: DAE6F3;");
 
         toolbarPane.getChildren().add(toolBar);
-        toolbarPane.getChildren().add(OptionsToolbar);
+        setupToolbarListeners(btns, toolBar, toolbarPane, stage, listView_script, listView_plugin, list_script, list_plugin, toolBar);
 
 
         // Add the main parts of the UI to the window.
@@ -107,27 +106,25 @@ public class EditorMain extends Application{
         mainBox.setCenter(textArea);
         Scene scene = new Scene(mainBox);
 
-        // Button event handlers.
-        btn1.setOnAction(event -> showDialog1());
-        btn2.setOnAction(event -> toolBar.getItems().add(new Button("ButtonN")));
-        //btn3.setOnAction(event -> showDialog1(listView_api, toolBar));
-        btn4.setOnAction(event -> showDialog2(stage,listView_script, toolBar));
-
         // TextArea event handlers & caret positioning.
         textArea.caretPositionProperty().addListener((ChangeListener<Number>) (object, oldValue, newValue) ->
         {
             try {
                 if (newValue.intValue() > 2 && handler != null) {
-                    String arr = handler.onType(textArea.getText(newValue.intValue() - 3, newValue.intValue()));
-
+                    String arr = null;
+                        arr = handler.onType(textArea.getText(newValue.intValue() - 3, newValue.intValue()));
 
                     if (arr != null) {
                         editor.textArea.replaceText(newValue.intValue() - 3, newValue.intValue(), "😊");
                     }
-
                 }
             }
-            catch(Exception e){}
+            catch(IndexOutOfBoundsException e){
+
+            }
+            catch(Exception e){
+
+            }
         });
 
         textArea.setText("This is sample text for development testing");
@@ -167,57 +164,73 @@ public class EditorMain extends Application{
         stage.show();
     }
 
-    private void showDialog1()
+    private void showDialog2(Stage stage, ListView<String> listView, ObservableList<String> listView_observable, ToolBar parentToolbar, boolean script)
     {
-        // TextInputDialog is a subclass of Dialog that just presents a single text field.
+        Button addBtn = null;
 
-        var dialog = new TextInputDialog();
-        dialog.setTitle("Text entry dialog box");
-        dialog.setHeaderText("Enter text");
-
-        // 'showAndWait()' opens the dialog and waits for the user to press the 'OK' or 'Cancel' button. It returns an Optional, which is a whole other discussion, but we can call 'orElse(null)' on that to get the actual string entered if the user pressed 'OK', or null if the user pressed 'Cancel'.
-
-        var inputStr = dialog.showAndWait().orElse(null);
-        if(inputStr != null)
-        {
-            // Alert is another specialised dialog just for displaying a quick message.
-            new Alert(
-                    Alert.AlertType.INFORMATION,
-                    "You entered '" + inputStr + "'",
-                    ButtonType.OK).showAndWait();
+        Dialog dialog = new Dialog();
+        if (script){
+            addBtn = new Button("Add Script");
+            dialog.setTitle("Scripts");
+            dialog.setHeaderText("Select a script and click \"Add\" to enable it");
+        }else{
+            addBtn = new Button("Add PLugin");
+            dialog.setTitle("Plugins");
+            dialog.setHeaderText("Choose a plugin and click \"Add\" to use it in editor");
         }
-    }
+        ToolBar toolBar = new ToolBar(addBtn);
 
-    private void showDialog2(Stage stage,ListView<String> listView, ToolBar parentToolbar)
-    {
-        Button addBtn = new Button("Add...");
-        Button removeBtn = new Button("Remove...");
-        ToolBar toolBar = new ToolBar(addBtn, removeBtn);
+        if (script){
+            addBtn.setOnAction(e ->
+            {
+                ScriptRunner runner=new ScriptRunner();
+                String path=fileChooser(stage);
+                if (path != null){
+                    runner.runner(editor,path);
+                    listView_observable.add("Emoji Script");
+                }
+            });
 
-        addBtn.setOnAction(e->
-        {
+        }else{
 
-            ScriptRunner runner=new ScriptRunner();
-            String path=fileChooser(stage);
-            runner.runner(editor,path);
-            listView.add("Emoji Script");
-        });
-
-        // FYI: 'ObservableList' inherits from the ordinary List interface, but also works as a subject for any 'observer-pattern' purposes; e.g., to allow an on-screen ListView to display any changes made to the list as they are made.
+            addBtn.setOnAction(event -> {
+                parentToolbar.getItems().add(new Button("New Btn"));
+            });
+        }
 
         BorderPane box = new BorderPane();
         box.setTop(toolBar);
         box.setCenter(listView);
 
-        Dialog dialog = new Dialog();
-        dialog.setTitle("List of things");
-        dialog.setHeaderText("Here's a list of things");
         dialog.getDialogPane().setContent(box);
         dialog.getDialogPane().getButtonTypes().add(ButtonType.OK);
-        dialog.showAndWait();
+        Optional<ButtonType> btnResult = dialog.showAndWait();
+
+        ButtonType ok_button = btnResult.orElse(ButtonType.OK);
+        if (ok_button == ButtonType.OK){
+            // OK button clicked
+        }else{
+            // Cancellled
+        }
     }
 
     // Buttons styling
+
+    private void setupToolbarListeners(List<Button> toolbar_btns, ToolBar toolbar, VBox vbox, Stage stage,
+                                       ListView listView_script, ListView listView_plugin,
+                                       ObservableList<String> listView_script_obs,
+                                       ObservableList<String> listView_plugin_obs,
+                                       ToolBar toolBar){
+        for (Button b : toolbar_btns){
+            b.setOnAction(event -> {
+                new toolbar_handler().toolbarHandler(b, toolbar, vbox, isChecked, stage);
+            });
+        }
+        toolbar_btns.get(toolbar_btns.size()-2).setOnAction(event -> showDialog2(stage, listView_script,
+                listView_script_obs, toolBar, true));
+        toolbar_btns.get(toolbar_btns.size()-1).setOnAction(event -> showDialog2(stage, listView_plugin,
+                listView_plugin_obs, toolBar, false));
+    }
 
     private void setOnHover(Button btn){
         btn.setOnMouseEntered(event -> {
@@ -239,10 +252,13 @@ public class EditorMain extends Application{
     public String fileChooser(Stage stage){
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Open File");
+        chooser.setInitialDirectory(new File(System.getProperty("user.dir")));
         File file=chooser.showOpenDialog(stage);
-        String path=file.toString();
-        return path;
-
+        if (file != null){
+            String path=file.toString();
+            return path;
+        }
+        return null;
     }
 
     public void registerHandler(TextAreaObserver handler){
