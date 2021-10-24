@@ -2,7 +2,6 @@ import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
@@ -14,28 +13,47 @@ import javafx.scene.control.ToolBar;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCode;
-import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import org.jetbrains.annotations.NotNull;
 
-import javax.swing.text.html.Option;
-import javax.tools.Tool;
+
+import java.io.File;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Stack;
+import java.lang.reflect.*;
+
+
+import org.python.util.PythonInterpreter;
+import org.python.core.*;
+
+import javax.swing.*;
+import java.lang.reflect.*;
+
+class ScriptRunner{
+    PythonInterpreter intr;
+    public void runner(EditorMain editor, String path){
+        File file=new File(path);
+        intr=new PythonInterpreter();
+        intr.set("editor", editor);
+        intr.execfile(String.valueOf(file));
+    }
+}
 
 
 public class EditorMain extends Application{
+    TextAreaObserver handler;
+
+    EditorMain editor=this;
 
     public static void main(String[] args)
     {
         Application.launch(args);
     }
 
-    private TextArea textArea = new TextArea();
+    public TextArea textArea = new TextArea();
 
     @Override
     public void start(Stage stage)
@@ -51,9 +69,9 @@ public class EditorMain extends Application{
         list_plugin.add("Date");
         list_plugin.add("Find");
 
-        ObservableList<String> list_api = FXCollections.observableArrayList();
-        ListView<String> listView_api = new ListView<>(list_api);
-        list_api.add("Emoji");
+        ObservableList<String> list_script = FXCollections.observableArrayList();
+        ListView<String> listView_script = new ListView<>(list_script);
+        list_script.add("Emoji");
 
         // Create toolbar
         Button btn1 = new Button("Viewer");
@@ -91,14 +109,23 @@ public class EditorMain extends Application{
         // Button event handlers.
         btn1.setOnAction(event -> showDialog1());
         btn2.setOnAction(event -> toolBar.getItems().add(new Button("ButtonN")));
-        btn3.setOnAction(event -> showDialog2(listView_api, toolBar));
-        btn4.setOnAction(event -> showDialog2(listView_plugin, toolBar));
+        //btn3.setOnAction(event -> showDialog1(listView_api, toolBar));
+        btn4.setOnAction(event -> showDialog2(stage,listView_script, toolBar));
 
         // TextArea event handlers & caret positioning.
         textArea.textProperty().addListener((object, oldValue, newValue) ->
         {
-            System.out.println("caret position is " + textArea.getCaretPosition() +
-                    "; text is\n---\n" + newValue + "\n---\n");
+
+            if(textArea.getLength()>2 && handler!=null){
+                String arr=handler.onType(textArea.getText(textArea.getCaretPosition()-3, textArea.getCaretPosition() ));
+
+                if(arr!=null) {
+                    System.out.println(arr);
+
+                    editor.textArea.replaceText(textArea.getCaretPosition()-3, textArea.getCaretPosition(), arr);
+                }
+
+            }
         });
 
         textArea.setText("This is sample text for development testing");
@@ -159,16 +186,21 @@ public class EditorMain extends Application{
         }
     }
 
-    private void showDialog2(ListView<String> listView, ToolBar parentToolbar)
+    private void showDialog2(Stage stage,ListView<String> listView, ToolBar parentToolbar)
     {
         Button addBtn = new Button("Add...");
         Button removeBtn = new Button("Remove...");
         ToolBar toolBar = new ToolBar(addBtn, removeBtn);
 
-        addBtn.setOnAction(event -> {
-            parentToolbar.getItems().add(new Button("New Btn"));
+        addBtn.setOnAction(e->
+        {
+            FileChooser chooser = new FileChooser();
+            chooser.setTitle("Open File");
+            File file=chooser.showOpenDialog(stage);
+            String path=file.toString();
+            ScriptRunner runner=new ScriptRunner();
+            runner.runner(editor,path);
         });
-        removeBtn.setOnAction(event -> new Alert(Alert.AlertType.INFORMATION, "Remove...", ButtonType.OK).showAndWait());
 
         // FYI: 'ObservableList' inherits from the ordinary List interface, but also works as a subject for any 'observer-pattern' purposes; e.g., to allow an on-screen ListView to display any changes made to the list as they are made.
 
@@ -186,7 +218,7 @@ public class EditorMain extends Application{
 
     // Buttons styling
 
-    private void setOnHover(@NotNull Button btn){
+    private void setOnHover(Button btn){
         btn.setOnMouseEntered(event -> {
 //            if (btn.getBackground().toString() == "gray")
 //            btn.setStyle("-fx-background-color: gray;");
@@ -194,12 +226,17 @@ public class EditorMain extends Application{
         btn.setOnMouseExited(event -> btn.setStyle("-fx-background-color: lightgray;"));
     }
 
-    private void setBtnStyling(String background_color, @NotNull List<Button> btns){
+    private void setBtnStyling(String background_color, List<Button> btns){
 
         for  (Button b : btns){
             b.setStyle(background_color);
             setOnHover(b);
         }
     }
+
+    public void registerHandler(TextAreaObserver handler){
+        this.handler=handler;
+    }
+
 
 }
